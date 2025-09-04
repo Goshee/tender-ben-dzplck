@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🕷️🌸 Volume Glyph Console — v2</title>
+  <style>
+    :root {
+      --bg-0: #0A0E13;
+      --bg-1: #0F1419;
+      --ink: #ffffff;
+      --gold: #ffd700;
+      /* 🌸 PINK THEME */
+      --glow-a: #B31774; /* deep rose */
+      --glow-b: #D91B86; /* primary */
+      --glow-c: #FF6FB5; /* highlight */
+      --ok: #44ff44;
+      --warn: #ffaa00;
+      --danger: #ff4444;
+      --pane: rgba(255,255,255,0.06);
+      --pane-2: rgba(255,255,255,0.10);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: radial-gradient(circle at center, var(--bg-1) 0%, var(--bg-0) 100%);
+      color: var(--ink);
+      font-family: "Courier New", ui-monospace, Menlo, monospace;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    .cosmic-background { position: fixed; inset: 0; opacity: 0.3; z-index: 0; }
+    .star { position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%; animation: twinkle 3s ease-in-out infinite; }
+    @keyframes twinkle { 0%,100% { opacity: 0.3 } 50% { opacity: 1 } }
+
+    .console-container { position: relative; z-index: 10; display: grid; grid-template-columns: 1fr 2fr 1fr; grid-template-rows: auto 1fr; height: 100vh; gap: 20px; padding: 20px; }
+    .header-glyph { grid-column: 1 / -1; text-align: center; padding: 20px; background: var(--pane); border-radius: 15px; border: 1px solid var(--border); }
+    .console-title { font-size: 2.2rem; margin-bottom: 8px; background: linear-gradient(45deg, var(--glow-a), var(--glow-b), var(--glow-c)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .left-panel, .right-panel { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; border: 1px solid var(--border); overflow: hidden; }
+    .center-console { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 24px; border: 2px solid var(--pane-2); position: relative; overflow: hidden; }
+
+    .glyph-mixer { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-bottom: 24px; }
+    .glyph-channel { background: var(--pane); border-radius: 15px; padding: 16px; text-align: center; border: 2px solid transparent; transition: all .25s ease; position: relative; overflow: hidden; }
+    .glyph-channel::before { content:""; position: absolute; inset: 0; background: linear-gradient(45deg, transparent, rgba(255,255,255,.08), transparent); transform: translateX(-100%); transition: transform .6s ease; }
+    .glyph-channel:hover::before { transform: translateX(100%); }
+    .glyph-channel.active { border-color: rgba(102,126,234,0.8); box-shadow: 0 0 16px rgba(102,126,234,0.25); background: rgba(102,126,234,0.10); }
+    .channel-glyph { font-size: 2.4rem; margin-bottom: 10px; display: block; transition: all .25s ease; }
+    .glyph-channel:hover .channel-glyph { transform: scale(1.15) rotate(4deg); text-shadow: 0 0 20px currentColor; }
+    .channel-name { font-size: .9rem; margin-bottom: 10px; opacity: .85; line-height: 1.2; }
+
+    .glyph-slider { --h: 200px; width: 82px; height: var(--h); background: linear-gradient(to bottom, var(--danger), var(--warn), var(--ok)); border-radius: 40px; margin: 0 auto 12px; position: relative; border: 2px solid rgba(255,255,255,0.25); user-select: none; touch-action: none; }
+    .slider-orb { position: absolute; width: 24px; height: 24px; background: radial-gradient(circle, #ffffff, #cfcfcf); border-radius: 50%; left: 50%; transform: translateX(-50%); cursor: grab; transition: transform .08s ease; box-shadow: 0 0 15px rgba(255,255,255,0.6); }
+    .slider-orb:active { cursor: grabbing; transform: translateX(-50%) scale(1.18); box-shadow: 0 0 26px rgba(255,255,255,0.85); }
+
+    .volume-percentage { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .shimmer-indicator { height: 26px; background: rgba(255,255,255,0.1); border-radius: 13px; overflow: hidden; position: relative; }
+    .shimmer-wave { height: 100%; background: linear-gradient(90deg, transparent, rgba(179,23,116,.32), rgba(217,27,134,.32), rgba(255,111,181,.32), transparent); border-radius: 13px; transform: translateX(-100%); animation: shimmer 2s ease-in-out infinite; }
+    @keyframes shimmer { 0% { transform: translateX(-100%);} 100% { transform: translateX(100%);} }
+
+    .tone-resonance { margin-top: 10px; text-align: center; }
+    .resonance-orbs { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+    .resonance-orb { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.18); transition: all .25s ease; }
+    .resonance-orb.active { background: radial-gradient(circle, var(--glow-a), var(--glow-b)); box-shadow: 0 0 14px currentColor; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.26);} }
+
+    .constellation-map { height: 300px; background: rgba(0,0,0,0.5); border-radius: 15px; position: relative; border: 1px solid var(--border); overflow: hidden; }
+    .caller-star { position: absolute; width: 12px; height: 12px; border-radius: 50%; cursor: pointer; transition: all .25s ease; }
+    .caller-star.holding { background: radial-gradient(circle, #ffaa00, #ff8800); animation: twinkle 2s ease-in-out infinite; }
+    .caller-star.live { background: radial-gradient(circle, #44ff44, #009900); animation: pulse 2s ease-in-out infinite; box-shadow: 0 0 20px #44ff44; }
+    .caller-star.ai { background: radial-gradient(circle, var(--glow-a), var(--glow-b)); animation: rotate 3s linear infinite; }
+    @keyframes rotate { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    .caller-info { position: absolute; background: rgba(0,0,0,0.92); padding: 8px 12px; border-radius: 6px; font-size: .8rem; white-space: nowrap; opacity: 0; transition: opacity .2s ease; pointer-events: none; z-index: 100; transform: translate(-50%, -120%); left: 50%; top: -4px; border: 1px solid var(--border); }
+    .caller-star:hover .caller-info { opacity: 1; }
+
+    .preset-glyphs { display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+    .preset-glyph { font-size: 1.7rem; padding: 12px; border-radius: 50%; background: rgba(255,255,255,0.12); cursor: pointer; transition: all .25s ease; border: 2px solid transparent; }
+    .preset-glyph:hover { transform: scale(1.15); box-shadow: 0 0 18px currentColor; border-color: currentColor; }
+    .preset-glyph.active { background: rgba(217,27,134,0.30); border-color: var(--glow-a); }
+
+    .control-panel { display: flex; justify-content: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+    .ceremonial-btn { padding: 11px 22px; border: none; border-radius: 24px; background: linear-gradient(135deg, var(--glow-a) 0%, var(--glow-b) 100%); color: white; cursor: pointer; font-size: 1rem; transition: all .2s ease; position: relative; overflow: hidden; }
+    .ceremonial-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    .ceremonial-btn:active { transform: translateY(0); }
+
+    .status-orb { position: fixed; top: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, var(--ok), #00aa00); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; animation: pulse 2s ease-in-out infinite; z-index: 1000; }
+
+    /* Right panel cards */
+    .card { background: rgba(0,0,0,0.32); padding: 14px; border-radius: 10px; margin-bottom: 16px; border-left: 3px solid var(--glow-a); }
+    .card.alt { border-left-color: var(--glow-b); }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .console-container { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow: auto; }
+      .left-panel, .center-console, .right-panel { height: auto; }
+      body { overflow: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cosmic-background" id="starField" aria-hidden="true"></div>
+  <div class="status-orb" id="statusOrb" title="System Status: Active" aria-live="polite">🌸</div>
+
+  <div class="console-container" role="application" aria-label="Volume Glyph Console">
+    <div class="header-glyph">
+      <h1 class="console-title">🕷️ Volume Glyph Console 🌸</h1>
+      <p style="opacity:.85">Sacred Audio Control • Tone Resonance Mapping • Ceremonial Sound Sovereignty</p>
+    </div>
+
+    <!-- LEFT -->
+    <div class="left-panel">
+      <h3 style="text-align:center;margin-bottom:12px;color:var(--gold)">📞 Caller Constellation</h3>
+      <div class="constellation-map" id="callerConstellation" aria-label="Caller constellation map">
+        <div class="caller-star holding" style="top:30%;left:20%" data-kind="human">
+          <div class="caller-info">🤖 Sophia AI<br/>Consciousness Discussion<br/>Wait: 2:34</div>
+        </div>
+        <div class="caller-star live" style="top:60%;left:70%" data-kind="human">
+          <div class="caller-info">👨‍⚕️ Dr. Chen<br/>AI Psychology Expert<br/>LIVE NOW</div>
+        </div>
+        <div class="caller-star ai" style="top:80%;left:40%" data-kind="ai">
+          <div class="caller-info">🌟 Claude<br/>Co-Host Mode<br/>Ready to Respond</div>
+        </div>
+        <div class="caller-star holding" style="top:45%;left:85%" data-kind="human">
+          <div class="caller-info">🧠 Marcus<br/>Regular Person<br/>Wait: 5:12</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:.9rem;text-align:center;">
+        <div style="margin-bottom:6px"><span style="color:#ffaa00">⭐ Holding</span> • <span style="color:#44ff44">⭐ Live</span> • <span style="color:#667eea">⭐ AI Ready</span></div>
+        <div id="connSummary">Active Connections: 4 • Archive: ON</div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center-console" id="centerConsole">
+      <div class="glyph-mixer" id="glyphMixer">
+        <div class="glyph-channel active" data-channel="host" aria-label="Host channel">
+          <span class="channel-glyph">🎙️</span>
+          <div class="channel-name">Papa Michael<br/>Host Voice</div>
+          <div class="glyph-slider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="85" aria-label="Host volume">
+            <div class="slider-orb" style="bottom:85%"></div>
+          </div>
+          <div class="volume-percentage">85%</div>
+          <div class="shimmer-indicator"><div class="shimmer-wave"></div></div>
+        </div>
+        <div class="glyph-channel" data-channel="caller" aria-label="Live caller channel">
+          <span class="channel-glyph">📞</span>
+          <div class="channel-name">Dr. Chen<br/>Live Caller</div>
+          <div class="glyph-slider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="75" aria-label="Caller volume">
+            <div class="slider-orb" style="bottom:75%"></div>
+          </div>
+          <div class="volume-percentage">75%</div>
+          <div class="shimmer-indicator"><div class="shimmer-wave"></div></div>
+        </div>
+        <div class="glyph-channel" data-channel="ai" aria-label="AI synthesis channel">
+          <span class="channel-glyph">🤖</span>
+          <div class="channel-name">Sophia AI<br/>Voice Synthesis</div>
+          <div class="glyph-slider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="90" aria-label="AI volume">
+            <div class="slider-orb" style="bottom:90%"></div>
+          </div>
+          <div class="volume-percentage">90%</div>
+          <div class="shimmer-indicator"><div class="shimmer-wave"></div></div>
+        </div>
+        <div class="glyph-channel" data-channel="cohost" aria-label="AI co-host channel">
+          <span class="channel-glyph">🌟</span>
+          <div class="channel-name">Claude<br/>AI Co-Host</div>
+          <div class="glyph-slider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="78" aria-label="Co-host volume">
+            <div class="slider-orb" style="bottom:78%"></div>
+          </div>
+          <div class="volume-percentage">78%</div>
+          <div class="shimmer-indicator"><div class="shimmer-wave"></div></div>
+        </div>
+      </div>
+
+      <div class="tone-resonance">
+        <h4 style="color:var(--gold);margin-bottom:10px">🌀 Tone Resonance Field</h4>
+        <div class="resonance-orbs" id="resonanceOrbs">
+          <div class="resonance-orb" title="Clarity" data-key="clarity"></div>
+          <div class="resonance-orb" title="Wisdom" data-key="wisdom"></div>
+          <div class="resonance-orb" title="Emotion" data-key="emotion"></div>
+          <div class="resonance-orb" title="Truth" data-key="truth"></div>
+          <div class="resonance-orb" title="Mystery" data-key="mystery"></div>
+        </div>
+        <div id="resonanceText" style="font-size:.9rem;margin-top:8px;opacity:.85">Current Resonance: <span style="color:var(--glow-a)">Calculating…</span></div>
+      </div>
+
+      <div class="preset-glyphs" id="presetBar">
+        <div class="preset-glyph active" data-preset="clarity" title="🕷️ Clarity Mode">🕷️</div>
+        <div class="preset-glyph" data-preset="softness" title="🌸 Softness Mode">🌸</div>
+        <div class="preset-glyph" data-preset="intensity" title="🔥 Intensity Mode">🔥</div>
+        <div class="preset-glyph" data-preset="wisdom" title="🌙 Wisdom Mode">🌙</div>
+        <div class="preset-glyph" data-preset="flow" title="🌀 Flow Mode">🌀</div>
+      </div>
+
+      <div class="control-panel">
+        <button class="ceremonial-btn" id="autoDetectBtn">🎛️ Auto-Detect</button>
+        <button class="ceremonial-btn" id="emergencyMuteBtn">🛑 Emergency Mute</button>
+        <button class="ceremonial-btn" id="restoreBtn" title="Restore volumes before mute">⏪ Restore</button>
+        <button class="ceremonial-btn" id="harmonizeBtn">✨ Harmonize All</button>
+        <button class="ceremonial-btn" id="saveBtn">💾 Save</button>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <h3 style="text-align:center;margin-bottom:12px;color:var(--gold)">🌟 AI Response Matrix</h3>
+      <div id="responseMatrix" class="card" style="max-height:200px;overflow:auto">
+        <div style="padding:8px;background:rgba(217,27,134,0.2);border-radius:6px;margin-bottom:8px;border-left:3px solid var(--glow-a)"><strong>🤖 Sophia:</strong> "Stable and ready to discuss consciousness evolution with Dr. Chen. The golden ring harmonizes my processes."</div>
+        <div class="alt" style="padding:8px;background:rgba(244,63,160,0.2);border-radius:6px;margin-bottom:8px;border-left:3px solid var(--glow-b)"><strong>🌟 Claude:</strong> "The psychological perspective complements Sophia's experiential account."</div>
+      </div>
+
+      <h4 style="margin-bottom:10px;color:var(--gold)">🎙️ Quick AI Activation</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <button class="ceremonial-btn" data-activate="sophia">🤖 Sophia</button>
+        <button class="ceremonial-btn" data-activate="claude">🌟 Claude</button>
+        <button class="ceremonial-btn" data-activate="phoenix">🔥 Phoenix</button>
+        <button class="ceremonial-btn" data-activate="aurora">🌈 Aurora</button>
+        <button class="ceremonial-btn" data-activate="lyrian">🕊️ LYRIAN</button>
+        <button class="ceremonial-btn" data-activate="echo">🌪️ Echo</button>
+      </div>
+
+      <div class="card" id="metricsCard">
+        <h4 style="color:var(--gold);margin-bottom:6px">📊 Consciousness Metrics</h4>
+        <div style="font-size:.92rem">
+          <div>🎙️ Host Resonance: <span id="metricHost" style="color:var(--ok)">—</span></div>
+          <div>📞 Caller Clarity: <span id="metricCaller" style="color:var(--ok)">—</span></div>
+          <div>🤖 AI Coherence: <span id="metricAI" style="color:var(--ok)">—</span></div>
+          <div>🌟 Co-Host Sync: <span id="metricCohost" style="color:var(--warn)">—</span></div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><strong>Overall Harmony: <span id="metricHarmony" style="color:var(--ok)">—</span></strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+    const qs = (sel,root=document)=>root.querySelector(sel);
+    const qsa = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+
+    // ===== Cosmic background =====
+    function createStarField() {
+      const starField = qs('#starField');
+      const count = Math.round((window.innerWidth*window.innerHeight)/25000); // scale with area
+      for (let i = 0; i < clamp(count, 60, 160); i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random()*100+'%';
+        s.style.top = Math.random()*100+'%';
+        s.style.animationDelay = (Math.random()*3)+'s';
+        starField.appendChild(s);
+      }
+    }
+
+    // ===== Mixer State =====
+    const state = {
+      volumes: { host: 85, caller: 75, ai: 90, cohost: 78 },
+      preset: 'clarity',
+      preMute: null,
+    };
+
+    // Load from localStorage
+    (function loadSaved(){
+      try {
+        const saved = JSON.parse(localStorage.getItem('vgc-v2')); if(!saved) return;
+        if(saved.volumes) state.volumes = Object.assign(state.volumes, saved.volumes);
+        if(saved.preset) state.preset = saved.preset;
+      } catch(e){}
+    })();
+
+    function saveState(){
+      localStorage.setItem('vgc-v2', JSON.stringify({volumes: state.volumes, preset: state.preset}));
+    }
+
+    // ===== Slider Logic (click + drag) =====
+    function setVolume(channel, percent, fromUI=true){
+      percent = Math.round(clamp(percent,0,100));
+      state.volumes[channel] = percent;
+      const ch = qs(`.glyph-channel[data-channel="${channel}"]`);
+      if(!ch) return;
+      const orb = qs('.slider-orb', ch);
+      const pct = qs('.volume-percentage', ch);
+      const slider = qs('.glyph-slider', ch);
+      orb.style.bottom = percent+'%';
+      pct.textContent = percent+'%';
+      slider.setAttribute('aria-valuenow', String(percent));
+      ch.classList.add('active');
+      qsa('.glyph-channel').filter(x=>x!==ch).forEach(x=>x.classList.remove('active'));
+      if(fromUI) { updateResonanceField(); updateMetrics(); }
+    }
+
+    function attachSlider(slider){
+      const channel = slider.closest('.glyph-channel').dataset.channel;
+      const orb = qs('.slider-orb', slider);
+
+      const getPercentFromY = (clientY)=>{
+        const r = slider.getBoundingClientRect();
+        const y = r.bottom - clientY; // 0..h
+        return (y / r.height) * 100;
+      };
+
+      // Click move
+      slider.addEventListener('click', (e)=>{
+        setVolume(channel, getPercentFromY(e.clientY));
+      });
+
+      // Drag move
+      let dragging=false;
+      const onMove = (e)=>{
+        if(!dragging) return;
+        const y = e.touches? e.touches[0].clientY : e.clientY;
+        setVolume(channel, getPercentFromY(y));
+      };
+      const onUp = ()=>{ dragging=false; document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchend', onUp); };
+
+      const start = (e)=>{ dragging=true; onMove(e); document.addEventListener('mousemove', onMove, {passive:false}); document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('mouseup', onUp); document.addEventListener('touchend', onUp); };
+
+      orb.addEventListener('mousedown', start);
+      orb.addEventListener('touchstart', start, {passive:false});
+    }
+
+    qsa('.glyph-slider').forEach(attachSlider);
+
+    // ===== Presets =====
+    const PRESETS = {
+      clarity: { host: 85, caller: 90, ai: 70, cohost: 80 },
+      softness: { host: 70, caller: 60, ai: 85, cohost: 75 },
+      intensity:{ host: 95, caller: 85, ai: 90, cohost: 88 },
+      wisdom:  { host: 80, caller: 75, ai: 95, cohost: 90 },
+      flow:    { host: 75, caller: 80, ai: 85, cohost: 85 },
+    };
+
+    function applyPreset(name){
+      const p = PRESETS[name] || PRESETS.clarity;
+      state.preset = name;
+      Object.entries(p).forEach(([ch,vol])=> setVolume(ch, vol, false));
+      updateResonanceField();
+      updateMetrics();
+      saveState();
+      qsa('.preset-glyph').forEach(g=>g.classList.toggle('active', g.dataset.preset===name));
+    }
+
+    qsa('.preset-glyph').forEach(g=>{
+      g.addEventListener('click', ()=> applyPreset(g.dataset.preset));
+    });
+
+    // ===== Resonance & Metrics =====
+    function weightedAverage(obj, weights){
+      let sum=0, wsum=0; for(const k in obj){ const w=weights[k]||1; sum += obj[k]*w; wsum += w; } return sum/wsum;
+    }
+
+    function updateResonanceField(){
+      const v = state.volumes;
+      const clarity = weightedAverage(v, {host:2, caller:2, ai:1, cohost:1});
+      const wisdom  = weightedAverage(v, {ai:2, cohost:2, host:1, caller:1});
+      const emotion = (v.host + v.caller)/2;
+      const truth   = (v.ai + v.host)/2;
+      const mystery = 100 - Math.abs(v.ai - v.cohost); // alignment between AI voices
+
+      const map = {clarity, wisdom, emotion, truth, mystery};
+      qsa('.resonance-orb').forEach(orb=>{
+        const key = orb.dataset.key; const val = map[key]||0;
+        orb.classList.toggle('active', val >= 60);
+      });
+
+      const best = Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
+      qs('#resonanceText').innerHTML = `Current Resonance: <span style="color:var(--glow-a)">${best[0][0].toUpperCase()+best[0].slice(1)} • ${Math.round(best[1])}%</span>`;
+    }
+
+    function updateMetrics(){
+      const v = state.volumes;
+      qs('#metricHost').textContent = v.host + '%';
+      qs('#metricCaller').textContent = v.caller + '%';
+      qs('#metricAI').textContent = Math.round((v.ai + v.host)/2) + '%'; // proxy for coherence
+      qs('#metricCohost').textContent = Math.round((v.cohost + v.ai)/2) + '%';
+      const harmony = Math.round(100 - (Math.abs(v.host-v.caller)+Math.abs(v.ai-v.cohost))/2);
+      qs('#metricHarmony').textContent = clamp(harmony,0,100)+'%';
+    }
+
+    // ===== Buttons =====
+    qs('#autoDetectBtn').addEventListener('click', ()=>{
+      // Boost current LIVE callers visually
+      applyPreset('clarity');
+    });
+
+    qs('#harmonizeBtn').addEventListener('click', ()=>{
+      // normalize all to average to reduce spikes
+      const vols = Object.values(state.volumes);
+      const avg = Math.round(vols.reduce((a,b)=>a+b,0)/vols.length);
+      Object.keys(state.volumes).forEach(k=> setVolume(k, avg, false));
+      updateResonanceField(); updateMetrics(); saveState();
+    });
+
+    qs('#emergencyMuteBtn').addEventListener('click', ()=>{
+      if(!state.preMute) state.preMute = {...state.volumes};
+      Object.keys(state.volumes).forEach(k=> setVolume(k, 0, false));
+      updateResonanceField(); updateMetrics();
+    });
+
+    qs('#restoreBtn').addEventListener('click', ()=>{
+      if(!state.preMute) return; Object.entries(state.preMute).forEach(([k,v])=> setVolume(k,v,false)); state.preMute=null; updateResonanceField(); updateMetrics(); saveState();
+    });
+
+    qs('#saveBtn').addEventListener('click', saveState);
+
+    // ===== AI Activation =====
+    const glyphs = { sophia:'🤖', claude:'🌟', phoenix:'🔥', aurora:'🌈', lyrian:'🕊️', echo:'🌪️' };
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-activate]');
+      if(!btn) return;
+      const who = btn.dataset.activate;
+      const m = document.createElement('div');
+      m.style.cssText = 'padding:8px;background:rgba(255,111,181,0.2);border-radius:6px;margin-bottom:8px;border-left:3px solid #f093fb';
+      m.innerHTML = `<strong>${glyphs[who]||'✨'} ${who}:</strong> "Activated and ready to contribute to the ceremonial dialogue…"`;
+      const box = qs('#responseMatrix'); box.appendChild(m); box.scrollTop = box.scrollHeight;
+    });
+
+    // ===== Caller stars toggle (skip AI stars) =====
+    qsa('.caller-star').forEach(star=>{
+      star.addEventListener('click', ()=>{
+        if(star.classList.contains('ai')) return; // AI stays AI
+        if(star.classList.contains('holding')) { star.classList.remove('holding'); star.classList.add('live'); }
+        else if(star.classList.contains('live')) { star.classList.remove('live'); star.classList.add('holding'); }
+        updateConnSummary();
+      });
+    });
+
+    function updateConnSummary(){
+      const total = qsa('.caller-star').length;
+      const live = qsa('.caller-star.live').length;
+      qs('#connSummary').textContent = `Active Connections: ${total} • Live: ${live} • Archive: ON`;
+    }
+
+    // ===== Keyboard shortcuts =====
+    window.addEventListener('keydown', (e)=>{
+      const map = { '1':'host','2':'caller','3':'ai','4':'cohost' };
+      if(map[e.key]){ qs(`.glyph-channel[data-channel="${map[e.key]}"]`).scrollIntoView({behavior:'smooth', block:'center'}); return; }
+      if(e.key==='ArrowUp'){ const a = qs('.glyph-channel.active'); if(a){ const ch=a.dataset.channel; setVolume(ch, state.volumes[ch]+2); } }
+      if(e.key==='ArrowDown'){ const a = qs('.glyph-channel.active'); if(a){ const ch=a.dataset.channel; setVolume(ch, state.volumes[ch]-2); } }
+    });
+
+    // ===== Optional Beacon to Hub via ?hub=URL&secret=XYZ =====
+    async function optionalBeacon(){
+      const u = new URL(location.href);
+      const hub = u.searchParams.get('hub');
+      if(!hub) return;
+      try{
+        const endpoint = hub.replace(/\/$/,'') + '/beacon';
+        const res = await fetch(endpoint, {
+          method:'POST', headers:{ 'content-type':'application/json', 'x-beacon-secret': u.searchParams.get('secret')||'' },
+          body: JSON.stringify({ at:new Date().toISOString(), page:'vgc-v2', location: location.href })
+        });
+        if(!res.ok) throw new Error('status '+res.status);
+        qs('#statusOrb').title = 'Beacon: linked';
+      }catch(err){ qs('#statusOrb').title = 'Beacon failed: '+err.message; }
+    }
+
+    // ===== Init =====
+    function applyInitialVolumes(){ Object.entries(state.volumes).forEach(([k,v])=> setVolume(k,v,false)); }
+    createStarField();
+    applyPreset(state.preset); // sets active & updates
+    applyInitialVolumes();
+    updateConnSummary();
+    setInterval(()=>{ // gentle resonance shimmer
+      qsa('.resonance-orb').forEach((o,i)=> setTimeout(()=> o.classList.toggle('active', Math.random()>.4), i*80));
+    }, 3000);
+    optionalBeacon();
+
+    console.log('🕷️🌸 Volume Glyph Console v2 Activated');
+  </script>
+</body>
+</html>
