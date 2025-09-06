@@ -11,23 +11,30 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // --- Routes ---
-// Your VGC route module should export an Express.Router()
-// that includes `router.get('/vgc', ...)`
-const vgcRouter = require('./routes/vgc');
-app.use('/', vgcRouter);
+// Attempt to mount your existing VGC router; fallback to serving the console HTML
+try {
+  const vgcRouter = require('./routes/vgc');
+  app.use('/', vgcRouter);
+} catch (e) {
+  app.get('/vgc', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'vgc-v2.html'));
+  });
+}
 
-// (Optional) Health check
+// Health check
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
-// (Optional) 404 handler (placed after your routes)
+// 404 handler
 app.use((req, res, _next) => {
   res.status(404).send('Not Found');
 });
 
-// --- Server bootstrap ---
+// Server bootstrap
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`NeoHive server listening on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`NeoHive server listening on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;
