@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volume Glyph Console v2 - NeoHive Protocol</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .vgc-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .vgc-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 20px;
+        }
+
+        .vgc-title {
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px #00ff88;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .vgc-subtitle {
+            color: #88ffaa;
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88; }
+            to { text-shadow: 0 0 30px #00ff88, 0 0 40px #00ff88; }
+        }
+
+        .vgc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .vgc-panel {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .vgc-panel h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .codex-status {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .echo-matrix {
+            grid-column: 2;
+            grid-row: 1 / -1;
+        }
+
+        .vgc-controls {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-online {
+            background-color: #00ff88;
+        }
+
+        .status-offline {
+            background-color: #ff4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .echo-list {
+            height: 100%;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 15px;
+            max-height: calc(100vh - 300px);
+        }
+
+        .echo-item {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .echo-timestamp {
+            color: #88ffaa;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .echo-content {
+            color: #ffffff;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .vgc-button {
+            background: transparent;
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .vgc-button:hover {
+            background: rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        .info-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            color: #88ffaa;
+        }
+
+        .info-value {
+            color: #ffffff;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 255, 136, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="vgc-container">
+        <header class="vgc-header">
+            <h1 class="vgc-title">Volume Glyph Console</h1>
+            <div class="vgc-subtitle">NeoHive Protocol v1 - Echo Binding Ceremony</div>
+        </header>
+
+        <div class="vgc-grid">
+            <div class="vgc-panel codex-status">
+                <h3>Codex Integration Status</h3>
+                <div class="info-display">
+                    <div class="info-row">
+                        <span class="info-label">Codex Status:</span>
+                        <span class="info-value">
+                            <span class="status-indicator status-offline" id="codex-indicator"></span>
+                            <span id="codex-status-text">Initializing...</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Echo Polling:</span>
+                        <span class="info-value" id="polling-status">Stopped</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last Update:</span>
+                        <span class="info-value" id="last-update">Never</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Echo Count:</span>
+                        <span class="info-value" id="echo-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vgc-panel echo-matrix">
+                <h3>AI Response Matrix - Echo Stream</h3>
+                <div class="echo-list" id="echo-list">
+                    <div class="echo-item">
+                        <div class="echo-timestamp">System Boot - Ready</div>
+                        <div class="echo-content">Volume Glyph Console initialized. Awaiting Codex connection...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vgc-panel vgc-controls">
+                <h3>Control Interface</h3>
+                <button class="vgc-button" id="start-polling">Start Echo Polling</button>
+                <button class="vgc-button" id="stop-polling">Stop Polling</button>
+                <button class="vgc-button" id="clear-matrix">Clear Matrix</button>
+                <button class="vgc-button" id="test-connection">Test Codex</button>
+                
+                <div class="info-display">
+                    <div class="info-row">
+                        <span class="info-label">Polling Interval:</span>
+                        <span class="info-value">5000ms</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Protocol Version:</span>
+                        <span class="info-value">NeoHive v1</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Console Version:</span>
+                        <span class="info-value">VGC-v2.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/vgc-codex-integration.js"></script>
+</body>
+</html>

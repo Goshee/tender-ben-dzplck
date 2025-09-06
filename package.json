@@ -29,7 +29,8 @@
     "node": "10.X"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node src/server.js",
+    "vgc": "node vgc-server-minimal.js",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
